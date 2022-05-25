@@ -12,7 +12,8 @@
 - include_tasks: bootstrap-amazon.yml
   when: '''ID="amzn"'' in os_release.stdout_lines'
 
-- include_tasks: bootstrap-redhat.yml
+# Our ksyun machine is centos8 migration from rhel8
+- include_tasks: bootstrap-centos.yml
   when: '''ID="rhel"'' in os_release.stdout_lines'
 
 - include_tasks: bootstrap-clearlinux.yml

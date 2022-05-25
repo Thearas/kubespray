@@ -25,6 +25,7 @@ plugins/mitogen
 inventory/*
 !inventory/local
 !inventory/sample
+!inventory/ksyun
 inventory/*/artifacts/
 
 # Byte-compiled / optimized / DLL files
@@ -37,6 +38,7 @@ __pycache__/
 env/
 build/
 credentials/
+!inventory/*/credentials
 develop-eggs/
 dist/
 downloads/
