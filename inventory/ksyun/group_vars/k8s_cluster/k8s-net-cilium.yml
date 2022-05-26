@@ -45,3 +45,17 @@
 # Enables the fallback to the user-space implementation.
 # This option is only effective when `cilium_encryption_type` is set to `wireguard`.
 # cilium_wireguard_userspace_fallback: "false"
+
+# Install Cilium Hubble
+cilium_enable_hubble: true ## enable support hubble in cilium
+cilium_hubble_install: true ## install hubble-relay, hubble-ui
+cilium_hubble_tls_generate: true ## install hubble-certgen and generate certificates
+cilium_enable_hubble_metrics: true
+cilium_enable_prometheus: true
+cilium_hubble_metrics:
+  - dns
+  - drop
+  - tcp
+  - flow
+  - icmp
+  - http
