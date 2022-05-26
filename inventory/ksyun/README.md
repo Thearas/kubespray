@@ -9,3 +9,9 @@ E.g.
 ```sh
 ansible-playbook -i inventory/ksyun/hosts.yaml  --private-key ksyun.pem -uroot --become --become-user=root cluster.yml
 ```
+
+Only upgrade network components:
+
+```sh
+ansible-playbook -i inventory/ksyun/hosts.yaml  --private-key ksyun.pem -uroot --become --become-user=root cluster.yml --tags=network
+```
