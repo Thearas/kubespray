@@ -1,0 +1,46 @@
+---
+- name: Check ansible version
+  import_playbook: ansible_version.yml
+
+- name: Ensure compatibility with old groups
+  import_playbook: legacy_groups.yml
+
+- hosts: bastion[0]
+  gather_facts: False
+  environment: "{{ proxy_disable_env }}"
+  roles:
+    - { role: kubespray-defaults }
+    - { role: bastion-ssh-config, tags: ["localhost", "bastion"] }
+
+- name: Gather facts
+  tags: always
+  import_playbook: facts.yml
+
+# Bootstrap OS
+# NTP
+- name: Register a variable, ignore errors and continue
+  gather_facts: False
+  command: which chronyd
+  register: hasChronyd
+  ignore_errors: true
+- name: Add NTP
+  hosts: k8s_cluster
+  gather_facts: False
+  lineinfile:
+    dest: /etc/chrony.conf
+    line: server ntp.aliyun.com iburst
+  when: hasChronyd.rc == 0
+- name: Sync with NTP
+  gather_facts: False
+  shell: |
+    systemctl stop chronyd
+    iptables -A OUTPUT -p udp -m udp -m multiport --dports 123 -m state --state NEW -j ACCEPT
+    iptables -A INPUT -m state --state NEW -p udp --dport 123 -j ACCEPT
+    chronyd -q 'server ntp.aliyun.com iburst'
+    systemctl start chronyd
+  when: hasChronyd.rc == 0
+
+# Increase MTU for better performance
+- name: Change MTU to 9000 
+  gather_facts: False
+  shell: ip link set dev eth0 mtu 9000
