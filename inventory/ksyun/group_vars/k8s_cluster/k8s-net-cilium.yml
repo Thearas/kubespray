@@ -47,15 +47,32 @@
 # cilium_wireguard_userspace_fallback: "false"
 
 # Install Cilium Hubble
-cilium_enable_hubble: true ## enable support hubble in cilium
-cilium_hubble_install: true ## install hubble-relay, hubble-ui
-cilium_hubble_tls_generate: true ## install hubble-certgen and generate certificates
-cilium_enable_hubble_metrics: true
+# cilium_enable_hubble: true ## enable support hubble in cilium
+# cilium_hubble_install: true ## install hubble-relay, hubble-ui
+# cilium_hubble_tls_generate: true ## install hubble-certgen and generate certificates
+# cilium_enable_hubble_metrics: true
+# cilium_hubble_metrics:
+#   - dns
+#   - drop
+#   - tcp
+#   - flow
+#   - icmp
+#   - http
+
 cilium_enable_prometheus: true
-cilium_hubble_metrics:
-  - dns
-  - drop
-  - tcp
-  - flow
-  - icmp
-  - http
+cilium_preallocate_bpf_maps: true
+
+# For higher version kernel
+cilium_tunnel_mode: disabled
+cilium_auto_direct_node_routes: true
+cilium_native_routing_cidr: 10.2.101.222/24
+cilium_config_extra_vars: {
+  # "install-no-conntrack-iptables-rules": true
+  enable-host-reachable-services: true,
+  enable-l7-proxy: true,
+  enable-bandwidth-manager: true,
+  enable-bpf-masquerade: true,
+  enable-ip-masq-agent: true,
+  enable-ipv4-masquerade: true,
+  enable-remote-node-identity: true
+}
