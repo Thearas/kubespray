@@ -20,8 +20,8 @@
 # NTP
 - name: Register a variable, ignore errors and continue
   gather_facts: False
-  command: which chronyd
-  register: hasChronyd
+  command: which chronyd || grep '^server ntp\.aliyun\.com iburst' /etc/chrony.conf
+  register: chronyd
   ignore_errors: true
 - name: Add NTP
   hosts: k8s_cluster
@@ -29,7 +29,7 @@
   lineinfile:
     dest: /etc/chrony.conf
     line: server ntp.aliyun.com iburst
-  when: hasChronyd.rc == 0
+  when: chronyd.rc == 0 and 'server ntp.aliyun.com iburst' not in chronyd.stdout
 - name: Sync with NTP
   gather_facts: False
   shell: |
@@ -38,9 +38,19 @@
     iptables -A INPUT -m state --state NEW -p udp --dport 123 -j ACCEPT
     chronyd -q 'server ntp.aliyun.com iburst'
     systemctl start chronyd
-  when: hasChronyd.rc == 0
+  when: chronyd.rc == 0 and 'server ntp.aliyun.com iburst' not in chronyd.stdout
 
 # Increase MTU for better performance
 - name: Change MTU to 9000 
   gather_facts: False
   shell: ip link set dev eth0 mtu 9000
+
+# Upgrade Kernel
+- name: Upgrade Kernel
+  hosts: k8s_cluster
+  gather_facts: False
+  import_playbook: upgrade_kernel.yml
+  # We need kernel >= 5.10 to speed up Cilium performance
+  when: ansible_kernel.split('-')[0] is version('5.10', '>=')
+  tags:
+    - upgrade-kernel
