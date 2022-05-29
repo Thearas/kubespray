@@ -36,9 +36,9 @@ loadbalancer_apiserver_healthcheck_port: 8081
 ### OTHER OPTIONAL VARIABLES
 
 ## Upstream dns servers
-# upstream_dns_servers:
-#   - 8.8.8.8
-#   - 8.8.4.4
+upstream_dns_servers:
+  - 172.16.4.1
+  - 172.16.4.100
 
 ## There are some changes specific to the cloud providers
 ## for instance we need to encapsulate packets with some network plugins
