@@ -39,10 +39,12 @@ data:
 {% if enable_coredns_reverse_dns_lookups %}
           fallthrough in-addr.arpa ip6.arpa
 {% endif %}
+          ttl 0
         }
         prometheus :9153
 {% if upstream_dns_servers is defined and upstream_dns_servers|length > 0 %}
         forward . {{ upstream_dns_servers|join(' ') }} {
+          max_concurrent 1000
           prefer_udp
         }
 {% else %}
