@@ -66,15 +66,15 @@
         dnf install -y https://www.elrepo.org/elrepo-release-8.el8.elrepo.noarch.rpm
         rpm --import https://www.elrepo.org/RPM-GPG-KEY-elrepo.org
         dnf makecache
-      when: ansible_kernel | version_compare('5.10','<')
+      when: ansible_kernel | version('5.10','<')
     - name: Upgrade Kernel
       shell: |
         dnf --enablerepo="elrepo-kernel" install -y kernel-ml
-      when: ansible_kernel | version_compare('5.10','<')
+      when: ansible_kernel | version('5.10','<')
     - name: Reboot the machine
       reboot:
         reboot_timeout: 300
-      when: ansible_kernel | version_compare('5.10','<')
+      when: ansible_kernel | version('5.10','<')
     - name: Confirm kernel version
       shell: uname -a
       register: kernel_version
