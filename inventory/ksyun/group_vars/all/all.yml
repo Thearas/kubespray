@@ -120,3 +120,14 @@ kube_webhook_token_auth_url_skip_tls_verify: false
 # kube_webhook_token_auth_url: https://...
 ## base64-encoded string of the webhook's CA certificate
 # kube_webhook_token_auth_ca_data: "LS0t..."
+
+system_reserved: true
+system_cpu_reserved: "1"
+system_memory_reserved: "30Gi"
+system_master_cpu_reserved: "1"
+system_master_memory_reserved: "30Gi"
+kube_cpu_reserved: "1"
+kube_memory_reserved: "4Gi"
+kube_master_cpu_reserved: "1"
+kube_master_memory_reserved: "4Gi"
+kubelet_args_base: "--topology-manager-policy=best-effort --cpu-manager-policy=static"
