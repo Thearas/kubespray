@@ -149,6 +149,29 @@ kube_proxy_nodeport_addresses: >-
 ## Encrypting Secret Data at Rest
 kube_encrypt_secret_data: false
 
+system_reserved: true
+system_cpu_reserved: 1000m
+system_memory_reserved: "30Gi"
+system_reserved_extra_vars: {
+  ephemeral-storage: 2Gi
+}
+system_master_cpu_reserved: 1000m
+system_master_memory_reserved: "30Gi"
+system_master_reserved_extra_vars: {
+  ephemeral-storage: 2Gi
+}
+kube_cpu_reserved: 1000m
+kube_memory_reserved: "4Gi"
+kube_reserved_extra_vars: {
+  ephemeral-storage: 2Gi
+}
+kube_master_cpu_reserved: 1000m
+kube_master_memory_reserved: "4Gi"
+kube_master_reserved_extra_vars: {
+  ephemeral-storage: 2Gi
+}
+kubelet_args_base: "--topology-manager-policy=best-effort --cpu-manager-policy=static"
+
 # Graceful Node Shutdown (Kubernetes >= 1.21.0), see https://kubernetes.io/blog/2021/04/21/graceful-node-shutdown-beta/
 # kubelet_shutdown_grace_period had to be greater than kubelet_shutdown_grace_period_critical_pods to allow
 # non-critical podsa to also terminate gracefully
