@@ -1,3 +1,4 @@
+# Defined tags: network, upgrade-kernel
 ---
 - name: Check ansible version
   import_playbook: ansible_version.yml
@@ -18,39 +19,66 @@
 
 # Bootstrap OS
 # NTP
-- name: Register a variable, ignore errors and continue
-  gather_facts: False
-  command: which chronyd || grep '^server ntp\.aliyun\.com iburst' /etc/chrony.conf
-  register: chronyd
-  ignore_errors: true
-- name: Add NTP
+- name: Sync with NTP
   hosts: k8s_cluster
   gather_facts: False
-  lineinfile:
-    dest: /etc/chrony.conf
-    line: server ntp.aliyun.com iburst
-  when: chronyd.rc == 0 and 'server ntp.aliyun.com iburst' not in chronyd.stdout
-- name: Sync with NTP
-  gather_facts: False
-  shell: |
-    systemctl stop chronyd
-    iptables -A OUTPUT -p udp -m udp -m multiport --dports 123 -m state --state NEW -j ACCEPT
-    iptables -A INPUT -m state --state NEW -p udp --dport 123 -j ACCEPT
-    chronyd -q 'server ntp.aliyun.com iburst'
-    systemctl start chronyd
-  when: chronyd.rc == 0 and 'server ntp.aliyun.com iburst' not in chronyd.stdout
+  tasks:
+    - command: which chronyd
+      register: chronyd
+      ignore_errors: true
+    - command: grep '^server ntp\.aliyun\.com iburst' /etc/chrony.conf
+      register: chrony_conf
+      ignore_errors: true
+    - name: Add NTP
+      lineinfile:
+        dest: /etc/chrony.conf
+        line: server ntp.aliyun.com iburst
+      when: chronyd.rc == 0 and 'server ntp.aliyun.com iburst' not in chrony_conf.stdout
+    - shell: |
+        systemctl stop chronyd
+        iptables -A OUTPUT -p udp -m udp -m multiport --dports 123 -m state --state NEW -j ACCEPT
+        iptables -A INPUT -m state --state NEW -p udp --dport 123 -j ACCEPT
+        chronyd -q 'server ntp.aliyun.com iburst'
+        systemctl start chronyd
+      when: chronyd.rc == 0 and 'server ntp.aliyun.com iburst' not in chrony_conf.stdout
 
-# Increase MTU for better performance
-- name: Change MTU to 9000 
+- name: OS Network
+  hosts: k8s_cluster
   gather_facts: False
-  shell: ip link set dev eth0 mtu 9000
+  tasks:
+    # Increase MTU for better performance
+    - name: Change MTU to 9000 
+      shell: ip link set dev eth0 mtu 9000
+    - name: TCP fast open
+      shell: sysctl -w net.ipv4.tcp_fastopen=3
+  tags:
+    - never
+    - network
 
 # Upgrade Kernel
 - name: Upgrade Kernel
   hosts: k8s_cluster
   gather_facts: False
-  import_playbook: upgrade_kernel.yml
-  # We need kernel >= 5.10 to speed up Cilium performance
-  when: ansible_kernel.split('-')[0] is version('5.10', '>=')
+  tasks:
+    - name: Update ELRepo Repository
+      shell: |
+        dnf update -y
+        dnf install -y https://www.elrepo.org/elrepo-release-8.el8.elrepo.noarch.rpm
+        rpm --import https://www.elrepo.org/RPM-GPG-KEY-elrepo.org
+        dnf makecache
+      when: ansible_kernel | version_compare('5.10','<')
+    - name: Upgrade Kernel
+      shell: |
+        dnf --enablerepo="elrepo-kernel" install -y kernel-ml
+      when: ansible_kernel | version_compare('5.10','<')
+    - name: Reboot the machine
+      reboot:
+        reboot_timeout: 300
+      when: ansible_kernel | version_compare('5.10','<')
+    - name: Confirm kernel version
+      shell: uname -a
+      register: kernel_version
+    - debug: var=kernel_version.stdout
   tags:
+    - never
     - upgrade-kernel
