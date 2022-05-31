@@ -64,30 +64,30 @@ kubeReserved:
 {% if is_kube_master|bool %}
   cpu: {{ kube_master_cpu_reserved }}
   memory: {{ kube_master_memory_reserved }}
-{% for key, value in kube_master_reserved_extra_vars.items() %}
-  {{ key }}: "{{ value }}"
-{% endfor %}
+{% if kube_master_ephemeral_storage_reserved is defined %}
+  ephemeral-storage: {{ kube_master_ephemeral_storage_reserved }}
+{% endif %}
 {% else %}
   cpu: {{ kube_cpu_reserved }}
   memory: {{ kube_memory_reserved }}
-{% for key, value in kube_reserved_extra_vars.items() %}
-  {{ key }}: "{{ value }}"
-{% endfor %}
+{% if kube_ephemeral_storage_reserved is defined %}
+  ephemeral-storage: {{ kube_ephemeral_storage_reserved }}
+{% endif %}
 {% endif %}
 {% if system_reserved is defined and system_reserved %}
 systemReserved:
 {% if is_kube_master|bool %}
   cpu: {{ system_master_cpu_reserved }}
   memory: {{ system_master_memory_reserved }}
-{% for key, value in system_master_reserved_extra_vars.items() %}
-  {{ key }}: "{{ value }}"
-{% endfor %}
+{% if system_master_ephemeral_storage_reserved is defined %}
+  ephemeral-storage: {{ system_master_ephemeral_storage_reserved }}
+{% endif %}
 {% else %}
   cpu: {{ system_cpu_reserved }}
   memory: {{ system_memory_reserved }}
-{% for key, value in system_reserved_extra_vars.items() %}
-  {{ key }}: "{{ value }}"
-{% endfor %}
+{% if system_ephemeral_storage_reserved is defined %}
+  ephemeral-storage: {{ system_ephemeral_storage_reserved }}
+{% endif %}
 {% endif %}
 {% endif %}
 {% if is_kube_master|bool and eviction_hard_control_plane is defined and eviction_hard_control_plane %}
