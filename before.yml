@@ -54,6 +54,7 @@
   tags:
     - never
     - network
+  
 
 # Upgrade Kernel
 - name: Upgrade Kernel
@@ -81,4 +82,11 @@
     - debug: var=kernel_version.stdout
   tags:
     - never
+    - upgrade-kernel
+
+- name: Install kernel-modules-extra since chaos-mesh depends it
+  dnf:
+    name: kernel-modules-extra
+    state: present
+  tags:
     - upgrade-kernel
