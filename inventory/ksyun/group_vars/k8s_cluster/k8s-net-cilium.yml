@@ -64,6 +64,19 @@ cilium_preallocate_bpf_maps: true
 
 # For higher version kernel
 cilium_tunnel_mode: disabled
+cilium_ip_masq_agent_enable: true
+cilium_non_masquerade_cidrs:
+  - 10.0.0.0/8
+  # - 172.16.0.0/12 # IDC uses this CIDR
+  - 192.168.0.0/16
+  - 100.64.0.0/10
+  - 192.0.0.0/24
+  - 192.0.2.0/24
+  - 192.88.99.0/24
+  - 198.18.0.0/15
+  - 198.51.100.0/24
+  - 203.0.113.0/24
+  - 240.0.0.0/4
 cilium_auto_direct_node_routes: true
 cilium_native_routing_cidr: 10.2.101.222/24
 cilium_config_extra_vars: {
@@ -72,7 +85,6 @@ cilium_config_extra_vars: {
   enable-l7-proxy: true,
   enable-bandwidth-manager: true,
   enable-bpf-masquerade: true,
-  enable-ip-masq-agent: true,
   enable-ipv4-masquerade: true,
   enable-remote-node-identity: true
 }
