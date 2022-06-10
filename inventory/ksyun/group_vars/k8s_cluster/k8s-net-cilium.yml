@@ -86,5 +86,6 @@ cilium_config_extra_vars: {
   enable-bandwidth-manager: true,
   enable-bpf-masquerade: true,
   enable-ipv4-masquerade: true,
-  enable-remote-node-identity: true
+  enable-remote-node-identity: true,
+  enable-custom-calls: true
 }
