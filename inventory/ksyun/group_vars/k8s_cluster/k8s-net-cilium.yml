@@ -63,8 +63,8 @@ cilium_enable_prometheus: true
 cilium_preallocate_bpf_maps: true
 
 # For higher version kernel
-cilium_tunnel_mode: disabled
-cilium_ip_masq_agent_enable: true
+# cilium_tunnel_mode: disabled
+cilium_ip_masq_agent_enable: false       # kernel >= 4.19
 cilium_non_masquerade_cidrs:
   - 10.0.0.0/8
   # - 172.16.0.0/12 # IDC uses this CIDR
@@ -77,15 +77,14 @@ cilium_non_masquerade_cidrs:
   - 198.51.100.0/24
   - 203.0.113.0/24
   - 240.0.0.0/4
-cilium_auto_direct_node_routes: true
-cilium_native_routing_cidr: 10.2.101.222/24
+# cilium_auto_direct_node_routes: true
+# cilium_native_routing_cidr: 10.2.101.222/24
 cilium_config_extra_vars: {
   # "install-no-conntrack-iptables-rules": true
-  enable-host-reachable-services: true,
-  enable-l7-proxy: true,
-  enable-bandwidth-manager: true,
-  enable-bpf-masquerade: true,
-  enable-ipv4-masquerade: true,
+  enable-host-reachable-services: false,  # kernel >= 4.19.57, >= 5.1.16, >= 5.2
+  enable-bandwidth-manager: false,        # kernel >= 5.1
+  enable-bpf-masquerade: false,           # kernel >= 4.19
+  # custom-calls
   enable-remote-node-identity: true,
   enable-custom-calls: true
 }
