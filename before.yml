@@ -54,10 +54,22 @@
   tags:
     - never
     - network
-  
+
+- name: Turn off hugepage
+  hosts: k8s_cluster
+  gather_facts: False
+  tasks:
+    - name: turn off THP
+      shell: |
+        echo never > /sys/kernel/mm/transparent_hugepage/defrag
+        echo never > /sys/kernel/mm/transparent_hugepage/enabled
+        echo 'echo never > /sys/kernel/mm/transparent_hugepage/defrag' >> /etc/rc.d/rc.local
+        echo 'echo never > /sys/kernel/mm/transparent_hugepage/enabled' >> /etc/rc.d/rc.local
+  tags:
+    - turn-off-hugepage
 
 # Upgrade Kernel
-- name: Upgrade Kernel
+- name: Upgrade Kernel ml
   hosts: k8s_cluster
   gather_facts: False
   tasks:
@@ -68,6 +80,9 @@
         rpm --import https://www.elrepo.org/RPM-GPG-KEY-elrepo.org
         dnf makecache
       when: ansible_kernel | version('5.10','<')
+    - name: Set yum.repos.d baseurl
+      shell: |
+        sed -e 's|baseurl=http://elrepo.org/linux/kernel/el8/$basearch/|baseurl=http://mirrors.neusoft.edu.cn/elrepo/kernel/el8/x86_64/|g' -e 's|mirrorlist=http://mirrors.elrepo.org/mirrors-elrepo-kernel.el8|#mirrorlist=http://mirrors.elrepo.org/mirrors-elrepo-kernel.el8|g' -i.bak /etc/yum.repos.d/elrepo.repo
     - name: Upgrade Kernel
       shell: |
         dnf --enablerepo="elrepo-kernel" install -y kernel-ml
@@ -80,13 +95,16 @@
       shell: uname -a
       register: kernel_version
     - debug: var=kernel_version.stdout
+    - name: Install kernel-modules-extra since chaos-mesh depends it
+      dnf:
+        name: kernel-ml-modules-extra.x86_64
+        state: present
+    - name: modprobe sch_netem
+      shell: |
+        modprobe sch_netem
+        lsmod | grep sch_netem
+      register: sch_netem
+    - debug: var=sch_netem.stdout
   tags:
     - never
-    - upgrade-kernel
-
-- name: Install kernel-modules-extra since chaos-mesh depends it
-  dnf:
-    name: kernel-modules-extra
-    state: present
-  tags:
-    - upgrade-kernel
+    - upgrade-kernel-ml
