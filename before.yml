@@ -40,7 +40,9 @@
         iptables -A INPUT -m state --state NEW -p udp --dport 123 -j ACCEPT
         chronyd -q 'server ntp.aliyun.com iburst'
         systemctl start chronyd
-      when: chronyd.rc == 0 and 'server ntp.aliyun.com iburst' not in chrony_conf.stdout
+        systemctl enable chronyd
+  tags:
+    - enable-chronyd
 
 - name: OS Network
   hosts: k8s_cluster
