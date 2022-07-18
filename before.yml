@@ -42,6 +42,7 @@
         systemctl start chronyd
         systemctl enable chronyd
   tags:
+    - never
     - enable-chronyd
 
 - name: OS Network
@@ -68,6 +69,7 @@
         echo 'echo never > /sys/kernel/mm/transparent_hugepage/defrag' >> /etc/rc.d/rc.local
         echo 'echo never > /sys/kernel/mm/transparent_hugepage/enabled' >> /etc/rc.d/rc.local
   tags:
+    - never
     - turn-off-hugepage
 
 # Upgrade Kernel

@@ -88,3 +88,7 @@ cilium_config_extra_vars: {
   enable-remote-node-identity: true,
   enable-custom-calls: true
 }
+
+cilium_image_repo: "{{ docker_image_repo }}/cilium/cilium"
+cilium_init_image_repo: "{{ docker_image_repo }}/cilium/cilium-init"
+cilium_operator_image_repo: "{{ docker_image_repo }}/cilium/operator"
