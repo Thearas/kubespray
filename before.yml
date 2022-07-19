@@ -72,6 +72,17 @@
     - never
     - turn-off-hugepage
 
+- name: Install nfs-utils, CI depends on it
+  hosts: k8s_cluster
+  gather_facts: False
+  tasks:
+    - name: install nfs-utils
+      dnf:
+        name: nfs-utils
+        state: present
+  tags:
+    - nfs-utils
+
 # Upgrade Kernel
 - name: Upgrade Kernel ml
   hosts: k8s_cluster
