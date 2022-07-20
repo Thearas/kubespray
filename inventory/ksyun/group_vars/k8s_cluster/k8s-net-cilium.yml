@@ -59,6 +59,9 @@
 #   - icmp
 #   - http
 
+cilium_memory_limit: 8Gi
+cilium_memory_requests: 500M
+
 cilium_enable_prometheus: true
 cilium_preallocate_bpf_maps: true
 
