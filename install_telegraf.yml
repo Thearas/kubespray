@@ -1,0 +1,13 @@
+---
+- hosts: k8s_cluster
+  gather_facts: False
+  tasks:
+    - name: Copy telegraf
+      ansible.builtin.copy:
+        src: ./contrib/telegraf/telegraf-1.17.0-1.x86_64.rpm
+        dest: /root/telegraf-1.17.0-1.x86_64.rpm
+      
+    - name: Install telegraf
+      script:
+        cmd: ./contrib/telegraf/install_telegraf.sh
+

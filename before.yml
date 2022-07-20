@@ -83,6 +83,11 @@
   tags:
     - nfs-utils
 
+- name: install telegraf
+  import_playbook: install_telegraf.yml
+  tags:
+    - telegraf
+
 # Upgrade Kernel
 - name: Upgrade Kernel ml
   hosts: k8s_cluster
