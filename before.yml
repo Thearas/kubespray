@@ -52,8 +52,12 @@
     # Increase MTU for better performance
     - name: Change MTU to 9000 
       shell: ip link set dev eth0 mtu 9000
-    - name: TCP fast open
-      shell: sysctl -w net.ipv4.tcp_fastopen=3
+    - name: modprobe sch_netem
+      shell: |
+        modprobe sch_netem
+        lsmod | grep sch_netem
+      register: sch_netem
+    - debug: var=sch_netem.stdout
   tags:
     - never
     - network
@@ -119,12 +123,6 @@
       dnf:
         name: kernel-ml-modules-extra.x86_64
         state: present
-    - name: modprobe sch_netem
-      shell: |
-        modprobe sch_netem
-        lsmod | grep sch_netem
-      register: sch_netem
-    - debug: var=sch_netem.stdout
   tags:
     - never
     - upgrade-kernel-ml
