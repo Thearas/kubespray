@@ -1,0 +1,41 @@
+- hosts: k8s_cluster
+  gather_facts: False
+  tasks:
+    - name: Create log link
+      shell:
+        cmd: |
+          mkdir -p /test-infra /data/nvme0n1/local-path-volumes
+          ln -s /data/nvme0n1/local-path-volumes /test-infra/local-path-volumes
+
+    - name: Mount disks
+      shell:
+        cmd: |
+          set -e
+          umount /DATA/disk1 /DATA/disk2 /DATA/disk3 /DATA/disk4
+          sed -i '/\/DATA\/disk/d;/nvme/d;/^$/d' /etc/fstab
+
+          mkfs.ext4 -F /dev/nvme0n1
+          mkdir -p /data/nvme0n1
+          mount -t ext4 /dev/nvme0n1 /data/nvme0n1
+          echo UUID=`sudo blkid -s UUID -o value /dev/nvme0n1` /data/nvme0n1 ext4 defaults 0 2 | sudo tee -a /etc/fstab
+
+          mkdir -p /mnt/disks
+          mkfs.ext4 -F /dev/nvme1n1
+          DISK_UUID=$(blkid -s UUID -o value /dev/nvme1n1) 
+          mkdir /mnt/disks/$DISK_UUID
+          mount -t ext4 /dev/nvme1n1 /mnt/disks/$DISK_UUID
+          echo UUID=`sudo blkid -s UUID -o value /dev/nvme1n1` /mnt/disks/$DISK_UUID ext4 defaults 0 2 | sudo tee -a /etc/fstab
+
+          mkfs.ext4 -F /dev/nvme2n1
+          DISK_UUID=$(blkid -s UUID -o value /dev/nvme2n1) 
+          mkdir /mnt/disks/$DISK_UUID
+          mount -t ext4 /dev/nvme2n1 /mnt/disks/$DISK_UUID
+          echo UUID=`sudo blkid -s UUID -o value /dev/nvme2n1` /mnt/disks/$DISK_UUID ext4 defaults 0 2 | sudo tee -a /etc/fstab
+
+          mkfs.ext4 -F /dev/nvme3n1
+          DISK_UUID=$(blkid -s UUID -o value /dev/nvme3n1) 
+          mkdir /mnt/disks/$DISK_UUID
+          mount -t ext4 /dev/nvme3n1 /mnt/disks/$DISK_UUID
+          echo UUID=`sudo blkid -s UUID -o value /dev/nvme3n1` /mnt/disks/$DISK_UUID ext4 defaults 0 2 | sudo tee -a /etc/fstab
+
+          mount -a
