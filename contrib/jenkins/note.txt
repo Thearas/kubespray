@@ -1,0 +1,28 @@
+$ openssl genrsa -out jenkins.pem
+$ openssl req -new -key jenkins.pem -out devopstales.csr -subj "/CN=jenkins"
+
+$ cat <<EOF> jenkins-csr.yaml
+apiVersion: certificates.k8s.io/v1beta1
+kind: CertificateSigningRequest
+metadata:
+  name: user-request-jenkins
+spec:
+  groups:
+  - system:authenticated
+  request: `cat jenkins.csr | base64 | tr -d '\n'`
+  usages:
+  - digital signature
+  - key encipherment
+  - client auth
+EOF
+
+$ kubectl create -f jenkins-csr.yaml
+$ kubectl get csr
+$ kubectl certificate approve user-request-jenkins
+$ kubectl get csr user-request-jenkins -o jsonpath='{.status.certificate}' | base64 -d > jenkins.crt
+
+
+kubectl --kubeconfig ~/.kube/user-jenkins config set-cluster ksyun --insecure-skip-tls-verify=true --server=https://10.2.101.222:6443
+kubectl --kubeconfig ~/.kube/user-jenkins config set-credentials jenkins --client-certificate=jenkins.crt --client-key=jenkins.pem --embed-certs=true
+kubectl --kubeconfig ~/.kube/user-jenkins config set-context default --cluster=ksyun --user=jenkins
+kubectl --kubeconfig ~/.kube/user-jenkins config use-context default
