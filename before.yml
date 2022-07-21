@@ -126,3 +126,154 @@
   tags:
     - never
     - upgrade-kernel-ml
+
+# Upgrade Kernel
+- name: Upgrade CentOS-7 to kernel 5.18
+  hosts: k8s_cluster
+  gather_facts: False
+  tasks:
+    - name: install wget
+      yum:
+        name: wget
+        state: present
+      when: ansible_distribution == 'CentOS'
+    - name: install dnf
+      yum:
+        name: dnf
+        state: present
+      when: ansible_distribution == 'CentOS'
+    - name: install huaweicloud mirror
+      shell: |
+        mv /etc/yum.repos.d/CentOS-Base.repo /etc/yum.repos.d/CentOS-Base.repo.backup
+        wget -O /etc/yum.repos.d/CentOS-Base.repo https://repo.huaweicloud.com/repository/conf/CentOS-7-reg.repo
+      when: ansible_distribution == 'CentOS'
+    - name: Update ELRepo Repository
+      shell: |
+        dnf update -y
+        dnf install -y https://www.elrepo.org/elrepo-release-7.el7.elrepo.noarch.rpm
+        rpm --import https://www.elrepo.org/RPM-GPG-KEY-elrepo.org
+      when: ansible_distribution == 'CentOS'
+    - name: Creating /etc/yum.repos.d/elrepo.repo
+      copy:
+        dest: /etc/yum.repos.d/elrepo.repo
+        backup: yes
+        content: |
+          ### Name: ELRepo.org Community Enterprise Linux Repository for el7
+          ### URL: https://elrepo.org/
+
+          [elrepo]
+          name=ELRepo.org Community Enterprise Linux Repository - el7
+          baseurl=http://mirrors.tuna.tsinghua.edu.cn/elrepo/elrepo/el7/$basearch/
+            http://mirrors.coreix.net/elrepo/elrepo/el7/$basearch/
+            http://mirror.rackspace.com/elrepo/elrepo/el7/$basearch/
+            http://linux-mirrors.fnal.gov/linux/elrepo/elrepo/el7/$basearch/
+          #mirrorlist=http://mirrors.elrepo.org/mirrors-elrepo.el7
+          enabled=1
+          gpgcheck=1
+          gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-elrepo.org
+          protect=0
+
+          [elrepo-testing]
+          name=ELRepo.org Community Enterprise Linux Testing Repository - el7
+          baseurl=http://mirrors.tuna.tsinghua.edu.cn/elrepo/testing/el7/$basearch/
+            http://mirrors.coreix.net/elrepo/testing/el7/$basearch/
+            http://mirror.rackspace.com/elrepo/testing/el7/$basearch/
+            http://linux-mirrors.fnal.gov/linux/elrepo/testing/el7/$basearch/
+          #mirrorlist=http://mirrors.elrepo.org/mirrors-elrepo-testing.el7
+          enabled=0
+          gpgcheck=1
+          gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-elrepo.org
+          protect=0
+
+          [elrepo-kernel]
+          name=ELRepo.org Community Enterprise Linux Kernel Repository - el7
+          baseurl=http://mirrors.tuna.tsinghua.edu.cn/elrepo/kernel/el7/$basearch/
+            http://mirrors.coreix.net/elrepo/kernel/el7/$basearch/
+            http://mirror.rackspace.com/elrepo/kernel/el7/$basearch/
+            http://linux-mirrors.fnal.gov/linux/elrepo/kernel/el7/$basearch/
+          #mirrorlist=http://mirrors.elrepo.org/mirrors-elrepo-kernel.el7
+          enabled=0
+          gpgcheck=1
+          gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-elrepo.org
+          protect=0
+
+          [elrepo-extras]
+          name=ELRepo.org Community Enterprise Linux Extras Repository - el7
+          baseurl=http://mirrors.tuna.tsinghua.edu.cn/elrepo/extras/el7/$basearch/
+            http://mirrors.coreix.net/elrepo/extras/el7/$basearch/
+            http://mirror.rackspace.com/elrepo/extras/el7/$basearch/
+            http://linux-mirrors.fnal.gov/linux/elrepo/extras/el7/$basearch/
+          #mirrorlist=http://mirrors.elrepo.org/mirrors-elrepo-extras.el7
+          enabled=0
+          gpgcheck=1
+          gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-elrepo.org
+          protect=0
+          [root@10-2-14-144 ~]# cat /etc/yum.repos.d/elrepo.repo
+          ### Name: ELRepo.org Community Enterprise Linux Repository for el7
+          ### URL: https://elrepo.org/
+
+          [elrepo]
+          name=ELRepo.org Community Enterprise Linux Repository - el7
+          baseurl=http://mirrors.tuna.tsinghua.edu.cn/elrepo/elrepo/el7/$basearch/
+            http://mirrors.coreix.net/elrepo/elrepo/el7/$basearch/
+            http://mirror.rackspace.com/elrepo/elrepo/el7/$basearch/
+            http://linux-mirrors.fnal.gov/linux/elrepo/elrepo/el7/$basearch/
+          #mirrorlist=http://mirrors.elrepo.org/mirrors-elrepo.el7
+          enabled=1
+          gpgcheck=1
+          gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-elrepo.org
+          protect=0
+
+          [elrepo-testing]
+          name=ELRepo.org Community Enterprise Linux Testing Repository - el7
+          baseurl=http://mirrors.tuna.tsinghua.edu.cn/elrepo/testing/el7/$basearch/
+            http://mirrors.coreix.net/elrepo/testing/el7/$basearch/
+            http://mirror.rackspace.com/elrepo/testing/el7/$basearch/
+            http://linux-mirrors.fnal.gov/linux/elrepo/testing/el7/$basearch/
+          #mirrorlist=http://mirrors.elrepo.org/mirrors-elrepo-testing.el7
+          enabled=0
+          gpgcheck=1
+          gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-elrepo.org
+          protect=0
+
+          [elrepo-kernel]
+          name=ELRepo.org Community Enterprise Linux Kernel Repository - el7
+          baseurl=http://mirrors.tuna.tsinghua.edu.cn/elrepo/kernel/el7/$basearch/
+            http://mirrors.coreix.net/elrepo/kernel/el7/$basearch/
+            http://mirror.rackspace.com/elrepo/kernel/el7/$basearch/
+            http://linux-mirrors.fnal.gov/linux/elrepo/kernel/el7/$basearch/
+          #mirrorlist=http://mirrors.elrepo.org/mirrors-elrepo-kernel.el7
+          enabled=0
+          gpgcheck=1
+          gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-elrepo.org
+          protect=0
+
+          [elrepo-extras]
+          name=ELRepo.org Community Enterprise Linux Extras Repository - el7
+          baseurl=http://mirrors.tuna.tsinghua.edu.cn/elrepo/extras/el7/$basearch/
+            http://mirrors.coreix.net/elrepo/extras/el7/$basearch/
+            http://mirror.rackspace.com/elrepo/extras/el7/$basearch/
+            http://linux-mirrors.fnal.gov/linux/elrepo/extras/el7/$basearch/
+          #mirrorlist=http://mirrors.elrepo.org/mirrors-elrepo-extras.el7
+          enabled=0
+          gpgcheck=1
+          gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-elrepo.org
+          protect=0
+      when: ansible_distribution == 'CentOS'
+    - name: Makecache
+      shell: |
+        yum makecache
+      when: ansible_distribution == 'CentOS'
+    - name: Upgrade Kernel
+      shell: |
+        dnf --enablerepo="elrepo-kernel" install -y kernel-ml-5.18.12-1.el7.elrepo.x86_64
+        grub2-set-default 0
+        grub2-mkconfig -o /boot/grub2/grub.cfg
+      when: ansible_distribution == 'CentOS'
+    - name: Reboot the machine
+      reboot:
+        reboot_timeout: 300
+      when: ansible_distribution == 'CentOS'
+  tags:
+    - never
+    - upgrade-centos7-kernel-5.18
