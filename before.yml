@@ -266,7 +266,7 @@
       when: ansible_distribution == 'CentOS'
     - name: Upgrade Kernel
       shell: |
-        dnf --enablerepo="elrepo-kernel" install -y kernel-ml-5.18.12-1.el7.elrepo.x86_64
+        dnf --enablerepo="elrepo-kernel" install -y kernel-ml
         grub2-set-default 0
         grub2-mkconfig -o /boot/grub2/grub.cfg
       when: ansible_distribution == 'CentOS'
