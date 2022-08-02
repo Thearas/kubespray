@@ -50,7 +50,7 @@
   gather_facts: False
   tasks:
     # Increase MTU for better performance
-    - name: Change MTU to 9000 
+    - name: Change MTU to 9000
       shell: ip link set dev eth0 mtu 9000
     - name: modprobe sch_netem
       shell: |
@@ -277,3 +277,20 @@
   tags:
     - never
     - upgrade-centos7-kernel-5.18
+
+- name: setup NIC aRFS
+  hosts: k8s_cluster
+  gather_facts: False
+  tasks:
+    - name: copy setup script
+      ansible.builtin.copy:
+        src: ./contrib/arfs/setup-rfs.sh
+        dest: /etc/rc.d/setup-rfs.sh
+    - name: ensure setup script executable
+      shell: |
+        chmod +x /etc/rc.d/setup-rfs.sh
+    - name: execute script
+      shell: |
+        /etc/rc.d/setup-rfs.sh
+  tags:
+    - arfs
