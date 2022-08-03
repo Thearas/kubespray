@@ -282,15 +282,25 @@
   hosts: k8s_cluster
   gather_facts: False
   tasks:
+    - name: ensure python3 installed
+      shell: |
+        dnf install -y python3
     - name: copy setup script
       ansible.builtin.copy:
-        src: ./contrib/arfs/setup-rfs.sh
-        dest: /etc/rc.d/setup-rfs.sh
+        src: ./contrib/arfs/setup-rfs.py
+        dest: /etc/rc.d/setup-rfs.py
     - name: ensure setup script executable
       shell: |
-        chmod +x /etc/rc.d/setup-rfs.sh
+        chmod +x /etc/rc.d/setup-rfs.py
+    - name: copy systemd file
+      ansible.builtin.copy:
+        src: ./contrib/arfs/test-infra-aRFS.service
+        dest: /etc/systemd/system/test-infra-aRFS.service
+    - name: enable systemd unit
+      shell: |
+        systemctl enable test-infra-aRFS.service
     - name: execute script
       shell: |
-        /etc/rc.d/setup-rfs.sh
+        systemctl start test-infra-aRFS.service
   tags:
     - arfs

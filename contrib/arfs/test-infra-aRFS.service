@@ -1,0 +1,10 @@
+[Unit]
+Description=enable aRFS
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 /etc/rc.d/setup-rfs.py
+
+[Install]
+WantedBy=multi-user.target
