@@ -1,5 +1,9 @@
 #!/usr/bin/python3
 
+# This script is inspired by https://github.com/bhuanand/rps-rfs-configuration
+# Unfortunately we cannot use that script directly, because it parses /proc/interrupts differently to get IRQ: Queue mapping.
+# And seems there isn't a general approach to do so (patterns in /proc/interrupts rely on NIC driver used).
+
 import subprocess
 import os
 import typing
