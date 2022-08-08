@@ -25,6 +25,30 @@ def shell_cmd(cmd: str) -> str:
 RFS_SOCK_FLOW_ENTRIES = 32768
 RFS_RPS_FLOW_CNT = 1024
 
+CPUINFO_FILE = "/proc/cpuinfo"
+CPUINFO_PROCESSOR_PATTERN = r"processor\s+:\s(\d+)"
+CPUINFO_CORE_PATTERN = r"core id\s+:\s(\d+)"
+CPUINFO_SOCKET_PATTERN = r"physical id\s+:\s(\d+)"
+
+
+class CPU():
+    def __init__(self, processor: int, core: int, socket: int):
+        self.processor = processor
+        self.core = core
+        self.socket = socket
+
+    def __lt__(self, other):
+        return self.socket < other.socket or \
+            (self.socket == other.socket and self.core < other.core) or \
+            (self.socket == other.socket and self.core == other.core and self.processor < other.processor)
+
+
+def parse_cpuinfo(regexp: str, cpuinfo: str) -> int:
+    match = re.search(regexp, cpuinfo)
+    if not match:
+        raise Exception(f"pattern {regexp} match nothing in '{cpuinfo}'")
+    return int(match.group(1))
+
 
 def disable_irqbalance():
     shell_cmd("systemctl disable irqbalance")
@@ -38,7 +62,17 @@ def iface_queues(iface: str, qtype: str = "rx") -> typing.List[str]:
 
 def configure_rps(iface: str):
     def rps_cpumask() -> str:
-        return "ffffffff,ffffffff,ffffffff"  # FIXME: generates it
+        remain_cpus = int(shell_cmd("nproc"))
+
+        cpu_masks = []
+        while remain_cpus > 0:
+            cur_cpus = min(remain_cpus, 32)
+            remain_cpus -= cur_cpus
+            cur_cpu_mask = 2**cur_cpus - 1
+            cpu_masks.append(format(cur_cpu_mask, 'x'))
+        cpu_masks.reverse()
+
+        return ",".join(cpu_masks)
 
     cpumask = rps_cpumask()
     rx_queues = iface_queues(iface)
@@ -85,21 +119,33 @@ def irq_nic_queue_mapping(iface_irq_pattern: str) -> typing.List[typing.Tuple[in
 
 
 def configure_irq_smp_affinity(iface_irq_pattern: str):
-    cpu_list = [
-        # NUMA1: 0-23,48-71, NUMA2: 24-47,72-95
-        # cpu list is hardcoded here for getting CPU topology isn't so trivial
-        list(range(0, 48)),
-        list(range(48, 96))
-    ]
-    irq_queue_mapping = irq_nic_queue_mapping(iface_irq_pattern)
+    def get_cpu_list() -> typing.List[CPU]:
+        """
+            get cpus from /proc/cpuinfo, returns cpu list order by socket, core(pcore), processor(vcore)
+            e.g. [socket0-core0-processor0, socket0-core0-processor1, socket0-core1-processor0, ...]
+        """
+        with open(CPUINFO_FILE) as f:
+            data = f.read()
+        cpuinfos = data.split("\n\n")
 
-    for i in range(len(cpu_list[0])):
-        cpu_thread0 = cpu_list[0][i]
-        cpu_thread1 = cpu_list[1][i]
-        irq_num, _ = irq_queue_mapping[i]
+        cpus: typing.List[CPU] = []
+        for cpuinfo in cpuinfos[:-1]:
+            processor = parse_cpuinfo(CPUINFO_PROCESSOR_PATTERN, cpuinfo)
+            core = parse_cpuinfo(CPUINFO_CORE_PATTERN, cpuinfo)
+            socket = parse_cpuinfo(CPUINFO_SOCKET_PATTERN, cpuinfo)
+            cpus.append(CPU(processor, core, socket))
+
+        return sorted(cpus)
+
+    cpu_list = get_cpu_list()
+    irq_queue_mapping = irq_nic_queue_mapping(iface_irq_pattern)
+    for i in range(0, len(cpu_list), 2):
+        cpu_thread0 = cpu_list[i].processor
+        cpu_thread1 = cpu_list[i + 1].processor
+        irq_num, _ = irq_queue_mapping[i // 2]
         shell_cmd(f"echo {cpu_thread0},{cpu_thread1} > /proc/irq/{irq_num}/smp_affinity_list")
 
-    for i in range(len(cpu_list[0]), len(irq_queue_mapping)):
+    for i in range(len(cpu_list) // 2, len(irq_queue_mapping)):
         # dump rest of NIC queues to core 0
         # NOTE: XPS will follow this configuration
         irq_num, _ = irq_queue_mapping[i]
@@ -116,9 +162,9 @@ def configure_xps(iface: str, iface_irq_pattern: str):
 
 def main():
     iface0 = "eth0"
-    iface0_irq_pattern = r"(?P<irq>\d+):.+mlx5_comp(?P<queue>\d+)@pci:0000:1a:00.0"
+    iface0_irq_pattern = r"(?P<irq>\d+):.+mlx5_comp(?P<queue>\d+)@pci:\w{4}:\w{2}:\w{2}.0"
     iface1 = "eth1"
-    iface1_irq_pattern = r"(?P<irq>\d+):.+mlx5_comp(?P<queue>\d+)@pci:0000:1a:00.1"
+    iface1_irq_pattern = r"(?P<irq>\d+):.+mlx5_comp(?P<queue>\d+)@pci:\w{4}:\w{2}:\w{2}.1"
 
     disable_irqbalance()
     configure_rps(iface0)
