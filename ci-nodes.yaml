@@ -1,0 +1,34 @@
+# Defined tags: network, upgrade-kernel
+---
+- name: Check ansible version
+  import_playbook: ansible_version.yml
+
+- name: Ensure compatibility with old groups
+  import_playbook: legacy_groups.yml
+
+- hosts: bastion[0]
+  gather_facts: False
+  environment: "{{ proxy_disable_env }}"
+  roles:
+    - { role: kubespray-defaults }
+    - { role: bastion-ssh-config, tags: ["localhost", "bastion"] }
+
+- name: Gather facts
+  tags: always
+  import_playbook: facts.yml
+
+- name: Update containerd config
+  hosts: k8s_cluster
+  gather_facts: False
+  tasks:
+    - shell: |
+        systemctl stop kubelet
+        systemctl stop containerd
+        mv /var/lib/containerd /var/lib/containerd.old
+        mkdir -p /data/nvme0n1/containerd
+        sed -e 's|root = "/var/lib/containerd"|root = "/data/nvme0n1/containerd"|g' -i.bak /etc/containerd/config.toml
+        systemctl restart containerd
+        systemctl restart kubelet
+  tags:
+    - never
+    - ci
